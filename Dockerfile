@@ -14,7 +14,7 @@ COPY . .
 # 顯式設為 development 確保 devDependencies 會被安裝（tsdown、tailwindcss、tsc 等）
 ENV NODE_ENV=development
 RUN npm install -g pnpm
-RUN pnpm install --no-frozen-lockfile --shamefully-hoist
+RUN pnpm install --shamefully-hoist
 
 FROM base AS builder
 
@@ -27,9 +27,6 @@ COPY --from=deps /app/ .
 RUN npm install -g pnpm
 
 ENV NODE_ENV=production
-# Next.js 16 預設使用 Turbopack，但 @haklex/* v0.0.105 的 CSS 含 ::highlight 偽元素
-# Turbopack 解析器不認識，強制回退 Webpack 進行 production build
-ENV NEXT_PRIVATE_TURBOPACK=0
 ARG BASE_URL
 
 # Build-time secrets - ensure these are passed securely during docker build

@@ -31,12 +31,7 @@ jobs:
         name: Install pnpm
         id: pnpm-install
         with:
-          # 修 lockfile 漂移：原 fork commit `891bb24c` bump @haklex/* 後未同步 pnpm-lock.yaml
-          run_install: false
-      - name: Install dependencies
-        # 從 monorepo 根目錄安裝才能解析跨 workspace 依賴
-        run: pnpm install --no-frozen-lockfile
-        working-directory: ./
+          run_install: true
 
       - name: Restore next build
         uses: actions/cache@v4
@@ -53,10 +48,6 @@ jobs:
       - name: Build next.js app
         # change this if your site requires a custom build command
         run: pnpm --filter @shiro/web build
-        env:
-          # Next.js 16 預設使用 Turbopack，但 @haklex/* v0.0.105 的 CSS 含 ::highlight 偽元素
-          # Turbopack 解析器不認識，強制回退 Webpack
-          NEXT_PRIVATE_TURBOPACK: 0
 
       # Here's the first place where next-bundle-analysis' own script is used
       # This step pulls the raw bundle stats for the current bundle
