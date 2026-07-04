@@ -1,15 +1,15 @@
 {
-  "not_enabled": "订阅功能暂时没有开启哦",
+  "not_enabled": "訂閱功能暫時沒有開啟哦",
   "type_post": "文章",
-  "type_note": "手记",
-  "type_say": "说说",
-  "type_recently": "速记",
-  "success": "订阅成功，谢谢你！",
-  "welcome": "欢迎订阅「{title}」，我会定期推送最新的内容到你的邮箱。",
-  "rss_hint": "你也可以通过",
+  "type_note": "手記",
+  "type_say": "說說",
+  "type_recently": "速記",
+  "success": "訂閱成功，謝謝你！",
+  "welcome": "歡迎訂閱「{title}」，我會定期推送最新的內容到你的信箱。",
+  "rss_hint": "你也可以通過",
   "rss_link": "/feed",
-  "rss_suffix": "订阅「{title}」的 RSS 流。",
-  "telegram_hint": "也可以订阅 Telegram 频道",
-  "submit": "订阅",
-  "form_email": "留下你的邮箱哦 *"
+  "rss_suffix": "訂閱「{title}」的 RSS 流。",
+  "telegram_hint": "也可以訂閱 Telegram 頻道",
+  "submit": "訂閱",
+  "form_email": "留下你的信箱哦 *"
 }

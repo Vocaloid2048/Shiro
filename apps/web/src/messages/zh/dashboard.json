@@ -1,6 +1,6 @@
 {
-  "categories": "分类",
-  "online_visitors": "当前在线访客",
+  "categories": "分類",
+  "online_visitors": "當前在線訪客",
   "use_gpu": "使用 GPU 加速",
-  "experimental_webgl": "（实验性功能，使用 WebGL 计算 BlurHash）"
+  "experimental_webgl": "（實驗性功能，使用 WebGL 計算 BlurHash）"
 }

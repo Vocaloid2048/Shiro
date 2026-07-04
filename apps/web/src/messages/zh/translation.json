@@ -1,11 +1,11 @@
 {
-  "banner_title": "AI 翻译",
-  "banner_description": "本文已由 AI 自动翻译，可能存在不准确之处",
+  "banner_title": "AI 翻譯",
+  "banner_description": "本文已由 AI 自動翻譯，可能存在不準確之處",
   "banner_viewOriginal": "查看原文",
-  "banner_translatedFrom": "从 {language} 翻译",
-  "optimizing": "正在优化翻译...",
+  "banner_translatedFrom": "從 {language} 翻譯",
+  "optimizing": "正在最佳化翻譯...",
   "original_mode": "原文模式",
-  "content_updated": "内容已更新，正在重新生成更好的翻译体验",
-  "viewing_original": "当前正在查看原始内容",
+  "content_updated": "內容已更新，正在重新生成更好的翻譯體驗",
+  "viewing_original": "當前正在查看原始內容",
   "original": "原文"
 }
