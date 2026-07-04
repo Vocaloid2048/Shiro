@@ -31,7 +31,12 @@ jobs:
         name: Install pnpm
         id: pnpm-install
         with:
-          run_install: true
+          # 修 lockfile 漂移：原 fork commit `891bb24c` bump @haklex/* 後未同步 pnpm-lock.yaml
+          run_install: false
+      - name: Install dependencies
+        # 從 monorepo 根目錄安裝才能解析跨 workspace 依賴
+        run: pnpm install --no-frozen-lockfile
+        working-directory: ./
 
       - name: Restore next build
         uses: actions/cache@v4

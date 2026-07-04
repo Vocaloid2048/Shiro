@@ -11,6 +11,8 @@ WORKDIR /app
 
 COPY . .
 
+# 顯式設為 development 確保 devDependencies 會被安裝（tsdown、tailwindcss、tsc 等）
+ENV NODE_ENV=development
 RUN npm install -g pnpm
 RUN pnpm install --no-frozen-lockfile
 
@@ -25,6 +27,9 @@ COPY --from=deps /app/ .
 COPY --from=deps /usr/local/lib/node_modules/pnpm /usr/local/lib/node_modules/pnpm
 RUN ln -sf ../lib/node_modules/pnpm/bin/pnpm.cjs /usr/local/bin/pnpm \
   && ln -sf ../lib/node_modules/pnpm/bin/pnpx.cjs /usr/local/bin/pnpx
+
+# 確保所有 devDependencies 都被 hoist 到 PATH（turbo 會依賴 packages/types 的 build 跑 tsdown + tailwindcss）
+RUN pnpm install --no-frozen-lockfile --shamefully-hoist
 
 ENV NODE_ENV=production
 ARG BASE_URL
