@@ -14,7 +14,7 @@ COPY . .
 # 顯式設為 development 確保 devDependencies 會被安裝（tsdown、tailwindcss、tsc 等）
 ENV NODE_ENV=development
 RUN npm install -g pnpm
-RUN pnpm install --no-frozen-lockfile
+RUN pnpm install --no-frozen-lockfile --shamefully-hoist
 
 FROM base AS builder
 
@@ -23,13 +23,8 @@ RUN apk update && apk add --no-cache git
 WORKDIR /app
 COPY --from=deps /app/ .
 
-# Reuse pnpm installed in deps stage to avoid network flakiness
-COPY --from=deps /usr/local/lib/node_modules/pnpm /usr/local/lib/node_modules/pnpm
-RUN ln -sf ../lib/node_modules/pnpm/bin/pnpm.cjs /usr/local/bin/pnpm \
-  && ln -sf ../lib/node_modules/pnpm/bin/pnpx.cjs /usr/local/bin/pnpx
-
-# 確保所有 devDependencies 都被 hoist 到 PATH（turbo 會依賴 packages/types 的 build 跑 tsdown + tailwindcss）
-RUN pnpm install --no-frozen-lockfile --shamefully-hoist
+# 重新安裝 pnpm（避免 symlink 權限問題，同時確保 .bin 的 hoist 結果可用）
+RUN npm install -g pnpm
 
 ENV NODE_ENV=production
 ARG BASE_URL

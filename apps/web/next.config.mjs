@@ -98,10 +98,6 @@ let nextConfig = {
       ],
     }
   },
-  turbopack: {
-    rules: codeInspectorPlugin({ bundler: 'turbopack', hotKeys: ['altKey'] }),
-  },
-
   webpack: (config) => {
     config.externals.push({
       'utf-8-validate': 'commonjs utf-8-validate',
@@ -119,6 +115,13 @@ let nextConfig = {
 
     return config
   },
+}
+
+// 只在 development 模式啟用 turbopack（production build 用 webpack，避免 @haklex CSS 的 ::highlight 偽元素解析失敗）
+if (!isProd) {
+  nextConfig.turbopack = {
+    rules: codeInspectorPlugin({ bundler: 'turbopack', hotKeys: ['altKey'] }),
+  }
 }
 
 // if (env.SENTRY === 'true' && isProd) {
