@@ -1,63 +1,97 @@
 name: Build and Push Docker Image
 
+# 觸發條件：
+#  - 推送到 main 分支
+#  - 推送任何 v* 標籤（如 v1.2.5）
+#  - 在 GitHub Actions 頁面手動觸發
+# 注意：刻意不為 PR 觸發（節省 GHCR 配額與構建時間）
+
 on:
   push:
     branches:
-      - main     # 當 main 分支有代碼推送時觸發
+      - main
     tags:
-      - 'v*'     # 當發佈新版本標籤（如 v1.2.5）時觸發
-  workflow_dispatch: # 支援在 GitHub 網頁上手動點擊觸發
+      - 'v*'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   build-and-push:
+    name: Build and push to GHCR
     runs-on: ubuntu-latest
+
+    # 需要 packages: write 才能 push 到 ghcr.io/<owner>/<repo>
     permissions:
       contents: read
-      packages: write # 賦予上傳映像檔至 GHCR 的權限
+      packages: write
 
     steps:
-      # 1. 檢出程式碼
+      # 1. 檢出程式碼（含 submodules，避免 reporter-assets 路徑在 build context 中為空目錄引發 COPY 失敗）
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-      # 2. 設定 QEMU（用於支援跨平台/ARM 架構構建）
+      # 2. 設定 QEMU（即使只構建 amd64，保留以備未來擴展 arm64）
       - name: Set up QEMU
-        uses: actions/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v3
 
       # 3. 設定 Docker Buildx
       - name: Set up Docker Buildx
-        uses: actions/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v3
 
-      # 4. 登入到 GitHub Container Registry (GHCR)
+      # 4. 登入 GitHub Container Registry
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 5. 生成 Docker 標籤與中繼資料
+      # 5. 產生映像檔標籤與 OCI 中繼資料
+      #    - 推 main → latest, main, sha-<7位>
+      #    - 推 v* tag → <version>, <major>.<minor>, latest, sha-<7位>
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          labels: |
+            org.opencontainers.image.title=Shiro
+            org.opencontainers.image.description=Minimalist personal site theme for Mix Space
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.licenses=AGPL-3.0
           tags: |
             type=ref,event=branch
+            type=ref,event=tag
             type=semver,pattern={{version}}
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,format=short,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
 
-      # 6. 開始編譯並推送映像檔
+      # 6. 編譯並推送到 GHCR
+      #    - 單架構 linux/amd64：Synology NAS x86_64 Container Manager 直接執行，無 QEMU 模擬開銷
+      #    - GHA 層級緩存：同 pnpm-lock.yaml hash 直接命中，大幅縮短後續構建時間
+      #    - build-args 全部從 GitHub Secrets 注入；secrets 為空時以空字串 fallback，保證 build 不中斷
+      #    - BASE_URL 為必填項；如未在 secrets 設定則使用佔位網址，運行時可由 .env 覆寫
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
           push: true
-          # 這裡同時構建常規的 x86_64(amd64) 和 ARM64 架構，適合各種 NAS
-          platforms: linux/amd64,linux/arm64
-          tags: ${{ id.meta.outputs.tags }}
-          labels: ${{ id.meta.outputs.labels }}
-          # 快取最佳化，加速下一次的編譯速度
+          platforms: linux/amd64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            BASE_URL=${{ secrets.BASE_URL || 'https://example.com' }}
+            S3_ACCESS_KEY=${{ secrets.S3_ACCESS_KEY || '' }}
+            S3_SECRET_KEY=${{ secrets.S3_SECRET_KEY || '' }}
+            WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET || '' }}
+            TMDB_API_KEY=${{ secrets.TMDB_API_KEY || '' }}
+            GH_TOKEN=${{ secrets.GH_TOKEN || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
