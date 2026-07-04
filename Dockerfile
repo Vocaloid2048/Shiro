@@ -27,6 +27,9 @@ COPY --from=deps /app/ .
 RUN npm install -g pnpm
 
 ENV NODE_ENV=production
+# Next.js 16 預設使用 Turbopack，但 @haklex/* v0.0.105 的 CSS 含 ::highlight 偽元素
+# Turbopack 解析器不認識，強制回退 Webpack 進行 production build
+ENV NEXT_PRIVATE_TURBOPACK=0
 ARG BASE_URL
 
 # Build-time secrets - ensure these are passed securely during docker build
