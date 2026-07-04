@@ -44,8 +44,7 @@ let nextConfig = {
     serverMinification: true,
     webpackBuildWorker: true,
     globalNotFound: true,
-    turbopackImportTypeText: true,
-
+    // 移除 turbopackImportTypeText — Next.js 16 已不認識，會觸發無效配置警告且可能強制啟用 Turbopack for build
     // optimizePackageImports: ['dayjs'],
   },
   images: {
