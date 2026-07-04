@@ -1,0 +1,63 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main     # 當 main 分支有代碼推送時觸發
+    tags:
+      - 'v*'     # 當發佈新版本標籤（如 v1.2.5）時觸發
+  workflow_dispatch: # 支援在 GitHub 網頁上手動點擊觸發
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # 賦予上傳映像檔至 GHCR 的權限
+
+    steps:
+      # 1. 檢出程式碼
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. 設定 QEMU（用於支援跨平台/ARM 架構構建）
+      - name: Set up QEMU
+        uses: actions/setup-qemu-action@v3
+
+      # 3. 設定 Docker Buildx
+      - name: Set up Docker Buildx
+        uses: actions/setup-buildx-action@v3
+
+      # 4. 登入到 GitHub Container Registry (GHCR)
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 5. 生成 Docker 標籤與中繼資料
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      # 6. 開始編譯並推送映像檔
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          # 這裡同時構建常規的 x86_64(amd64) 和 ARM64 架構，適合各種 NAS
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ id.meta.outputs.tags }}
+          labels: ${{ id.meta.outputs.labels }}
+          # 快取最佳化，加速下一次的編譯速度
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
